@@ -44,6 +44,39 @@ filhote com `setBaby(true)` e o jogo cuida do resto (inclusive de crescer sozinh
 
 ---
 
+## Comportamento e domesticação (fase 2)
+
+Tudo feito via eventos do Forge, **sem mixins** e sem alterar o mod base.
+
+- **Bebê é passivo ao jogador.** No mod base, o Purusaurus (inclusive bebê) mira e
+  ataca o jogador. Este addon impede que **bebês** e **domesticados** tenham o
+  jogador como alvo — então eles não perseguem nem revidam contra o jogador.
+  Adultos selvagens (não domesticados) continuam hostis como antes.
+- **Domesticação (só em bebês):** clique com o botão direito no bebê segurando um
+  destes itens. Cada um tem sua taxa de sucesso:
+
+  | Item | Taxa |
+  |------|------|
+  | Carne de vaca (crua) | 30% |
+  | Carne de porco (crua) | 25% |
+  | Carne de ovelha (crua) | 20% |
+  | Carne de coelho (crua) | 15% |
+  | Carne de frango (crua) | 10% |
+  | Salmão (cru) | 5% |
+  | Bacalhau (cru) | 2,5% |
+  | Peixe tropical | 1,5% |
+
+  O item é consumido a cada tentativa (exceto no criativo). **Sucesso** → partículas
+  de **coração**; **falha** → partículas de **fumaça** (igual ao lobo).
+- **Depois de domesticado**, o Purusaurus fica **completamente passivo ao jogador** e
+  **continua passivo quando vira adulto**. O estado de domesticado é salvo na própria
+  entidade (persiste ao fechar/abrir o mundo).
+
+> Adultos **não** são domesticáveis — só bebês. Para ter um Purusaurus domesticado,
+> consiga um ovo, espere chocar e domestique o filhote.
+
+---
+
 ## Como gerar o `.jar` pelo GitHub Actions (recomendado)
 
 Você **não precisa instalar nada** no seu PC. O GitHub compila pra você.
