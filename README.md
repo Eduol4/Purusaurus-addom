@@ -56,6 +56,17 @@ Tudo feito via eventos do Forge, **sem mixins** e sem alterar o mod base.
 - **Ataque assistido.** O Purusaurus domesticado ataca **qualquer alvo que o dono
   atacar** (como o lobo), com exceção de **outros animais domesticados** (pets vanilla
   e outros Purusaurus domados).
+- **Regeneração natural.** O domesticado recupera **1 HP a cada 5 segundos**.
+- **Som ao alimentar.** Alimentar com as carnes (seja domesticando um bebê ou curando
+  um domesticado) toca um som de comer em tom grave junto com a animação de mordida.
+
+### Reprodução e obtenção do ovo
+
+- **Reprodução:** alimente dois Purusaurus adultos com o item **`raw_meat`** do mod base
+  (o alimento de acasalamento da espécie). Em vez de nascer um bebê, é posto um
+  **Ovo de Purusaurus no chão**, que choca normalmente.
+- **Drop selvagem:** um Purusaurus **adulto selvagem** morto pelo jogador tem **1,5%**
+  de chance de dropar o **ovo como item** (pegável), que o jogador pode colocar onde quiser.
 - **Bebês têm metade dos atributos.** Bebês (selvagens e domesticados) têm metade do
   **HP** (100 em vez de 200) e metade do **dano** (6 em vez de 12) dos adultos, via um
   modificador de atributo aplicado enquanto são bebês e removido ao crescerem.

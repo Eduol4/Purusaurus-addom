@@ -4,15 +4,24 @@ import com.purusaurusaddon.PurusaurusAddon;
 import com.purusaurusaddon.goal.PurusaurusFollowOwnerGoal;
 import com.purusaurusaddon.goal.PurusaurusOwnerHurtTargetGoal;
 import com.purusaurusaddon.goal.PurusaurusStayGoal;
+import com.purusaurusaddon.registry.ModBlocks;
+import com.purusaurusaddon.registry.ModItems;
 import com.purusaurusaddon.taming.TamingUtil;
-import net.minecraft.world.InteractionHand;
+import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.living.BabyEntitySpawnEvent;
 import net.minecraftforge.event.entity.living.LivingChangeTargetEvent;
+import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -56,15 +65,22 @@ public class PurusaurusEvents {
         TamingUtil.updateBabyAttributes(mob); // bebe: metade do HP/dano
     }
 
-    /** Mantem os atributos de bebe (metade de HP/dano) sincronizados conforme ele cresce. */
+    /** Atributos de bebe + regeneracao natural do domesticado (a cada 1s, no servidor). */
     @SubscribeEvent
     public static void onLivingTick(LivingEvent.LivingTickEvent event) {
         LivingEntity self = event.getEntity();
         if (self.level().isClientSide || self.tickCount % 20 != 0) {
-            return; // a cada 1s, so no servidor
+            return;
         }
-        if (TamingUtil.isPurusaurus(self) && self instanceof Mob mob) {
-            TamingUtil.updateBabyAttributes(mob);
+        if (!TamingUtil.isPurusaurus(self) || !(self instanceof Mob mob)) {
+            return;
+        }
+        TamingUtil.updateBabyAttributes(mob); // bebe: metade do HP/dano
+
+        // Regeneracao natural: domesticado recupera 1 HP a cada 5 segundos.
+        if (self.tickCount % 100 == 0 && TamingUtil.isTamed(mob)
+                && mob.getHealth() < mob.getMaxHealth()) {
+            mob.heal(1.0F);
         }
     }
 
@@ -154,7 +170,7 @@ public class PurusaurusEvents {
                     stack.shrink(1);
                 }
                 mob.heal(TamingUtil.healAmount(stack.getItem()));
-                mob.swing(InteractionHand.MAIN_HAND); // reusa a mordida como animacao de comer
+                TamingUtil.playFeedEffects(mob); // som de comer (grave) + mordida
             }
             return;
         }
@@ -172,12 +188,68 @@ public class PurusaurusEvents {
         if (!player.getAbilities().instabuild) {
             stack.shrink(1);
         }
+        TamingUtil.playFeedEffects(mob); // som de comer (grave) + mordida
         if (mob.getRandom().nextFloat() < chance) {
             TamingUtil.setTamed(mob, player);
             mob.setTarget(null);
             TamingUtil.spawnTamingParticles(mob, true);   // coracoes
         } else {
             TamingUtil.spawnTamingParticles(mob, false);  // fumaca
+        }
+    }
+
+    /**
+     * Reproducao: em vez do bebe nascer direto, um Ovo de Purusaurus e posto no chao.
+     * (A reproducao continua sendo acionada alimentando dois adultos com o item "meat"
+     * do mod base, que ja e o alimento de acasalamento da entidade.)
+     */
+    @SubscribeEvent
+    public static void onBabySpawn(BabyEntitySpawnEvent event) {
+        Mob parent = event.getParentA();
+        if (!TamingUtil.isPurusaurus(parent)) {
+            return;
+        }
+        event.setCanceled(true); // nao nasce bebe; o Forge zera o "amor" dos pais
+        layEgg(parent);
+    }
+
+    /** Chance de 1.5% de um Purusaurus adulto SELVAGEM dropar o ovo como item pegavel. */
+    @SubscribeEvent
+    public static void onLivingDrops(LivingDropsEvent event) {
+        LivingEntity self = event.getEntity();
+        if (!TamingUtil.isPurusaurus(self) || !(self instanceof Mob mob)) {
+            return;
+        }
+        if (mob.isBaby() || TamingUtil.isTamed(mob) || !event.isRecentlyHit()) {
+            return; // so adulto selvagem, morto por jogador
+        }
+        if (mob.getRandom().nextFloat() < 0.015F) {
+            ItemStack egg = new ItemStack(ModItems.PURUSAURUS_EGG.get());
+            ItemEntity drop = new ItemEntity(mob.level(), mob.getX(), mob.getY(), mob.getZ(), egg);
+            drop.setDefaultPickUpDelay();
+            event.getDrops().add(drop);
+        }
+    }
+
+    /** Coloca um Ovo de Purusaurus no chao proximo ao pai. */
+    private static void layEgg(Mob parent) {
+        Level level = parent.level();
+        if (level.isClientSide) {
+            return;
+        }
+        BlockState egg = ModBlocks.PURUSAURUS_EGG.get().defaultBlockState();
+        BlockPos origin = parent.blockPosition();
+        BlockPos[] candidates = {
+                origin,
+                origin.north(), origin.south(), origin.east(), origin.west()
+        };
+        for (BlockPos pos : candidates) {
+            if (level.getBlockState(pos).isAir() && egg.canSurvive(level, pos)) {
+                level.setBlock(pos, egg, 3);
+                level.playSound(null, pos, SoundEvents.TURTLE_LAY_EGG, SoundSource.BLOCKS,
+                        0.3F, 0.9F + parent.getRandom().nextFloat() * 0.2F);
+                return;
+            }
         }
     }
 }

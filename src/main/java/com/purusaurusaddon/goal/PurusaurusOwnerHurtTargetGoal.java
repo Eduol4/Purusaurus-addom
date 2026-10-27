@@ -16,6 +16,11 @@ import java.util.EnumSet;
  */
 public class PurusaurusOwnerHurtTargetGoal extends TargetGoal {
 
+    // Sem exigir linha de visao: o pet mira imediatamente no alvo do dono
+    // (senao demora 1-3s ate "enxergar" o alvo para comecar a atacar).
+    private static final TargetingConditions ASSIST_CONDITIONS =
+            TargetingConditions.forCombat().ignoreLineOfSight();
+
     private final Mob purusaurus;
     private LivingEntity ownerLastHurt;
     private int timestamp;
@@ -42,7 +47,7 @@ public class PurusaurusOwnerHurtTargetGoal extends TargetGoal {
                 && this.ownerLastHurt != owner
                 && this.ownerLastHurt.isAlive()
                 && !TamingUtil.isDomesticated(this.ownerLastHurt)      // nao ataca outros pets
-                && this.canAttack(this.ownerLastHurt, TargetingConditions.DEFAULT);
+                && this.canAttack(this.ownerLastHurt, ASSIST_CONDITIONS);
     }
 
     @Override

@@ -8,6 +8,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -197,6 +200,20 @@ public final class TamingUtil {
         } else if (!baby && hasModifier) {
             instance.removeModifier(id);
         }
+    }
+
+    /**
+     * Efeito de alimentacao: toca o som de comer em tom grave e aciona a animacao
+     * de mordida (reusada como "comer"). Chamar no lado servidor.
+     */
+    public static void playFeedEffects(Mob mob) {
+        mob.swing(InteractionHand.MAIN_HAND);
+        mob.level().playSound(
+                null,
+                mob.getX(), mob.getY(), mob.getZ(),
+                SoundEvents.GENERIC_EAT, SoundSource.NEUTRAL,
+                1.2F,                                        // volume
+                0.5F + mob.getRandom().nextFloat() * 0.15F); // tom grave (deeper)
     }
 
     /**
