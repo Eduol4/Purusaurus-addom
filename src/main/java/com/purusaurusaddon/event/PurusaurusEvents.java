@@ -4,6 +4,7 @@ import com.purusaurusaddon.PurusaurusAddon;
 import com.purusaurusaddon.goal.PurusaurusFollowOwnerGoal;
 import com.purusaurusaddon.goal.PurusaurusOwnerHurtTargetGoal;
 import com.purusaurusaddon.goal.PurusaurusStayGoal;
+import com.purusaurusaddon.goal.PurusaurusSwimWanderGoal;
 import com.purusaurusaddon.registry.ModBlocks;
 import com.purusaurusaddon.registry.ModItems;
 import com.purusaurusaddon.swim.PurusaurusSwimController;
@@ -67,6 +68,7 @@ public class PurusaurusEvents {
         }
         mob.goalSelector.addGoal(0, new PurusaurusStayGoal(mob));
         mob.goalSelector.addGoal(1, new PurusaurusFollowOwnerGoal(mob));
+        mob.goalSelector.addGoal(3, new PurusaurusSwimWanderGoal(mob)); // vagar nadando
         // Domesticado ataca o que o dono ataca (menos outros pets).
         mob.targetSelector.addGoal(1, new PurusaurusOwnerHurtTargetGoal(mob));
         TamingUtil.updateBabyAttributes(mob); // bebe: metade do HP/dano

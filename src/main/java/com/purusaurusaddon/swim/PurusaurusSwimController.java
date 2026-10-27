@@ -1,6 +1,7 @@
 package com.purusaurusaddon.swim;
 
 import com.purusaurusaddon.taming.TamingUtil;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
@@ -12,11 +13,8 @@ import net.minecraft.world.phys.Vec3;
  * assume o movimento manualmente (definindo o deltaMovement), o que permite
  * mergulhar e emergir em 3D como um animal aquatico, em vez de so boiar.
  *
- * Nao mexe no codigo do mod base: o mob continua sendo terrestre; apenas
- * "pilotamos" ele enquanto submerso. Foco em perseguir alvos e seguir o dono
- * na agua (o vagar-na-agua acontece de brinde quando a navegacao entra nela).
- *
- * Velocidades: modificador * escala -> blocos por tick. Facilmente ajustaveis.
+ * Nao mexe no codigo do mod base: o mob continua terrestre; apenas "pilotamos"
+ * ele enquanto na agua.
  */
 public final class PurusaurusSwimController {
 
@@ -25,6 +23,7 @@ public final class PurusaurusSwimController {
     public static final double SWIM_SLOW_MODIFIER = 0.50D; // nado lento (~andar)
     public static final double SWIM_FAST_MODIFIER = 1.00D;  // nado rapido (~correr)
     private static final double SWIM_SCALE = 0.22D;         // modificador -> blocos/tick
+    private static final float TURN_SPEED = 15.0F;          // graus/tick para virar o corpo
 
     /** Chamado todo tick no servidor para cada Purusaurus. Age somente na agua. */
     public static void tick(Mob mob) {
@@ -35,6 +34,12 @@ public final class PurusaurusSwimController {
         // Faz o controlador de animacao do mob base tocar "swim" enquanto na agua.
         mob.setAggressive(true);
 
+        // Modo "ficar" na agua: segura a profundidade atual em vez de boiar.
+        if (TamingUtil.isTamed(mob) && TamingUtil.getMode(mob) == TamingUtil.MODE_STAY) {
+            holdDepth(mob);
+            return;
+        }
+
         Vec3 goal = swimGoal(mob);
         if (goal != null) {
             Vec3 toGoal = goal.subtract(mob.position());
@@ -43,10 +48,9 @@ public final class PurusaurusSwimController {
                 Vec3 dir = toGoal.scale(1.0D / dist);
                 double speed = (shouldSwimFast(mob) ? SWIM_FAST_MODIFIER : SWIM_SLOW_MODIFIER) * SWIM_SCALE;
                 Vec3 desired = dir.scale(speed);
-                // suaviza a mudanca de velocidade/direcao
-                Vec3 blended = mob.getDeltaMovement().scale(0.6D).add(desired.scale(0.4D));
-                mob.setDeltaMovement(blended);
+                mob.setDeltaMovement(mob.getDeltaMovement().scale(0.6D).add(desired.scale(0.4D)));
                 mob.hasImpulse = true;
+                faceMovement(mob, dir); // vira o corpo para a direcao (corrige nadar de re)
             }
         } else {
             // Ocioso na agua: sobe suavemente para ficar perto da superficie.
@@ -57,7 +61,32 @@ public final class PurusaurusSwimController {
         }
     }
 
-    /** Para onde nadar: alvo de combate, caminho atual, ou o dono (modo seguir). */
+    /** Segura a profundidade onde foi mandado ficar (nao sobe nem desce). */
+    private static void holdDepth(Mob mob) {
+        double targetY;
+        if (mob.getPersistentData().contains(TamingUtil.STAY_Y_KEY)) {
+            targetY = mob.getPersistentData().getDouble(TamingUtil.STAY_Y_KEY);
+        } else {
+            targetY = mob.getY();
+            mob.getPersistentData().putDouble(TamingUtil.STAY_Y_KEY, targetY);
+        }
+        double dy = Mth.clamp(targetY - mob.getY(), -0.08D, 0.08D);
+        mob.setDeltaMovement(0.0D, dy, 0.0D);
+    }
+
+    /** Gira o corpo gradualmente para a direcao horizontal do nado. */
+    private static void faceMovement(Mob mob, Vec3 dir) {
+        if (dir.x * dir.x + dir.z * dir.z < 1.0E-4D) {
+            return;
+        }
+        float targetYaw = (float) (Mth.atan2(dir.z, dir.x) * (180.0D / Math.PI)) - 90.0F;
+        float delta = Mth.clamp(Mth.wrapDegrees(targetYaw - mob.getYRot()), -TURN_SPEED, TURN_SPEED);
+        float newYaw = mob.getYRot() + delta;
+        mob.setYRot(newYaw);
+        mob.yBodyRot = newYaw;
+    }
+
+    /** Para onde nadar: alvo, caminho, destino do move control (vagar), ou o dono. */
     private static Vec3 swimGoal(Mob mob) {
         LivingEntity target = mob.getTarget();
         if (target != null && target.isAlive()) {
@@ -66,6 +95,11 @@ public final class PurusaurusSwimController {
         Path path = mob.getNavigation().getPath();
         if (path != null && !path.isDone()) {
             return path.getNextEntityPos(mob);
+        }
+        if (mob.getMoveControl().hasWanted()) {
+            return new Vec3(mob.getMoveControl().getWantedX(),
+                    mob.getMoveControl().getWantedY(),
+                    mob.getMoveControl().getWantedZ());
         }
         if (TamingUtil.isTamed(mob) && TamingUtil.getMode(mob) == TamingUtil.MODE_FOLLOW) {
             Player owner = TamingUtil.getOwnerPlayer(mob);

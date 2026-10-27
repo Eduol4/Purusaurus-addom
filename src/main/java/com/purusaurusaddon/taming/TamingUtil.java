@@ -42,6 +42,7 @@ public final class TamingUtil {
     public static final String TAMED_KEY = "purusaurusaddon:Tamed";
     public static final String OWNER_KEY = "purusaurusaddon:Owner";
     public static final String MODE_KEY = "purusaurusaddon:Mode";
+    public static final String STAY_Y_KEY = "purusaurusaddon:StayY"; // profundidade travada no modo ficar
 
     // Modos de comportamento do Purusaurus domesticado.
     public static final int MODE_WANDER = 0; // vaga como os selvagens
@@ -154,6 +155,14 @@ public final class TamingUtil {
         setMode(mob, mode);
         if (mode == MODE_STAY) {
             mob.getNavigation().stop();
+            // Se mandar ficar na agua, trava a profundidade atual; senao, limpa.
+            if (mob.isInWater()) {
+                mob.getPersistentData().putDouble(STAY_Y_KEY, mob.getY());
+            } else {
+                mob.getPersistentData().remove(STAY_Y_KEY);
+            }
+        } else {
+            mob.getPersistentData().remove(STAY_Y_KEY);
         }
         String message = switch (mode) {
             case MODE_FOLLOW -> "Purusaurus is following.";

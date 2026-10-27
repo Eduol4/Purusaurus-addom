@@ -85,9 +85,14 @@ Vale para selvagens e domesticados.
   ao perseguir um alvo ou seguir um dono que esteja correndo/longe; senão, nada devagar.
   (As velocidades são constantes em `PurusaurusSwimController` e fáceis de ajustar.)
 - **Entra na água** para perseguir alvos (que o atacaram/provocaram, ou que o dono atacou)
-  e para seguir o dono nadando. Vagar autônomo dentro d'água acontece de forma leve
-  quando a navegação entra na água; o foco é perseguir/seguir.
-- **Animação:** usa automaticamente a animação de nadar já existente enquanto está na água.
+  e para seguir o dono nadando.
+- **Vagar nadando:** quando está na água sem alvo e sem seguir/ficar, vaga por pontos
+  d'água próximos — de propósito raso, perto da terra e ocasional (não fica muito tempo
+  nem vai fundo). Vale para selvagens e domesticados.
+- **Ficar (stay) na água:** mantém a **profundidade atual** parado onde foi mandado ficar,
+  em vez de boiar à superfície.
+- **Animação:** usa automaticamente a animação de nadar já existente enquanto está na água,
+  e gira o corpo para a direção do nado (evita "nadar de ré").
 - **Domesticação (só em bebês):** clique com o botão direito no bebê segurando um
   destes itens. Cada um tem sua taxa de sucesso:
 
