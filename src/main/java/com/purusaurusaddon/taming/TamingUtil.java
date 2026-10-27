@@ -11,6 +11,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -106,6 +108,32 @@ public final class TamingUtil {
     public static UUID getOwner(Entity entity) {
         CompoundTag data = entity.getPersistentData();
         return data.hasUUID(OWNER_KEY) ? data.getUUID(OWNER_KEY) : null;
+    }
+
+    /** O dono online desta entidade, ou null se nao houver dono ou ele estiver offline. */
+    public static Player getOwnerPlayer(Mob mob) {
+        UUID id = getOwner(mob);
+        if (id == null) {
+            return null;
+        }
+        return mob.level().getPlayerByUUID(id);
+    }
+
+    /** True se a entidade for um animal domesticado (nosso Purusaurus, ou pets vanilla). */
+    public static boolean isDomesticated(Entity entity) {
+        if (entity == null) {
+            return false;
+        }
+        if (isTamed(entity)) {
+            return true; // Purusaurus domesticado por este addon
+        }
+        if (entity instanceof TamableAnimal tamable && tamable.isTame()) {
+            return true; // lobo, gato, papagaio...
+        }
+        if (entity instanceof AbstractHorse horse && horse.isTamed()) {
+            return true; // cavalo, burro, mula, lhama...
+        }
+        return false;
     }
 
     public static int getMode(Entity entity) {

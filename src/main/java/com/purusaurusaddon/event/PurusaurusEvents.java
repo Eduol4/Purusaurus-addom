@@ -2,6 +2,7 @@ package com.purusaurusaddon.event;
 
 import com.purusaurusaddon.PurusaurusAddon;
 import com.purusaurusaddon.goal.PurusaurusFollowOwnerGoal;
+import com.purusaurusaddon.goal.PurusaurusOwnerHurtTargetGoal;
 import com.purusaurusaddon.goal.PurusaurusStayGoal;
 import com.purusaurusaddon.taming.TamingUtil;
 import net.minecraft.world.InteractionHand;
@@ -50,6 +51,8 @@ public class PurusaurusEvents {
         }
         mob.goalSelector.addGoal(0, new PurusaurusStayGoal(mob));
         mob.goalSelector.addGoal(1, new PurusaurusFollowOwnerGoal(mob));
+        // Domesticado ataca o que o dono ataca (menos outros pets).
+        mob.targetSelector.addGoal(1, new PurusaurusOwnerHurtTargetGoal(mob));
         TamingUtil.updateBabyAttributes(mob); // bebe: metade do HP/dano
     }
 
@@ -97,9 +100,17 @@ public class PurusaurusEvents {
             }
         }
 
-        // Neutro: so permite mirar no jogador se foi ele quem atacou (revide).
+        // Neutro: permite mirar no jogador se (a) foi ele quem atacou o Purusaurus
+        // (revide) ou (b) foi o dono quem atacou esse jogador (ataque assistido).
         boolean retaliation = mob.getLastHurtByMob() == target;
-        if (!retaliation) {
+        boolean ownerAttacked = false;
+        if (tamed) {
+            Player owner = TamingUtil.getOwnerPlayer(mob);
+            if (owner != null && owner.getLastHurtMob() == target) {
+                ownerAttacked = true;
+            }
+        }
+        if (!retaliation && !ownerAttacked) {
             event.setCanceled(true);
         }
     }

@@ -19,25 +19,25 @@ import java.util.UUID;
  *
  * Velocidades (multiplicadores do atributo de movimento), proximas ao mob base
  * (andar 0.35 / correr 0.70), um pouco maiores para o pet nao ficar lento:
- *  - andar  = 0.38
- *  - correr = 0.75
+ *  - andar  = 0.39
+ *  - correr = 0.77
  * Corre (e usa a animacao "run" via setAggressive) quando o dono esta correndo
  * OU muito longe; caso contrario anda normalmente.
  *
  * Distancias (maiores que as do lobo, por causa do tamanho do bicho):
  *  - comeca a seguir a 12 blocos (lobo: 10)
  *  - para de seguir a 6 blocos
- *  - passa a correr a partir de 18 blocos
+ *  - passa a correr a partir de 15 blocos
  *  - teletransporta a 26 blocos (lobo: 12)
  */
 public class PurusaurusFollowOwnerGoal extends Goal {
 
-    private static final double WALK_SPEED = 0.38D;
-    private static final double RUN_SPEED = 0.75D;
+    private static final double WALK_SPEED = 0.39D;
+    private static final double RUN_SPEED = 0.77D;
 
     private static final float START_DISTANCE = 12.0F;
     private static final float STOP_DISTANCE = 6.0F;
-    private static final float RUN_DISTANCE = 18.0F;
+    private static final float RUN_DISTANCE = 15.0F;
     private static final float TELEPORT_DISTANCE = 26.0F;
 
     private final Mob mob;

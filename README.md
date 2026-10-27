@@ -53,6 +53,9 @@ Tudo feito via eventos do Forge, **sem mixins** e sem alterar o mod base.
   **adultos domesticados** neutros: não escolhem o jogador como alvo sozinhos, mas
   **revidam** se forem atacados. O domesticado **nunca revida contra o próprio dono**
   (revida contra outros jogadores, sim). Adultos selvagens continuam hostis como antes.
+- **Ataque assistido.** O Purusaurus domesticado ataca **qualquer alvo que o dono
+  atacar** (como o lobo), com exceção de **outros animais domesticados** (pets vanilla
+  e outros Purusaurus domados).
 - **Bebês têm metade dos atributos.** Bebês (selvagens e domesticados) têm metade do
   **HP** (100 em vez de 200) e metade do **dano** (6 em vez de 12) dos adultos, via um
   modificador de atributo aplicado enquanto são bebês e removido ao crescerem.
@@ -100,10 +103,10 @@ Tudo feito via eventos do Forge, **sem mixins** e sem alterar o mod base.
 - **Modos (Shift + clique direito, com qualquer item):** alterna entre
   **Vagar** (anda sozinho como os selvagens), **Seguir** e **Ficar** (fica parado).
   Uma mensagem na barra de ação (acima da hotbar) mostra o modo atual.
-- **Seguir:** segue o dono como o lobo. Anda na velocidade normal do bicho (0.35 + 5%)
-  e **corre** (animação de corrida, 0.70 + 5%) quando o dono está correndo ou muito
-  longe. Distâncias maiores que as do lobo: começa a seguir a 12 blocos, corre a partir
-  de 18 e **teletransporta** a 26 (lobo: segue a 10, teleporta a 12).
+- **Seguir:** segue o dono como o lobo. Anda a 0.39 e **corre** (animação de corrida)
+  a 0.77 quando o dono está correndo ou muito longe. Distâncias maiores que as do lobo:
+  começa a seguir a 12 blocos, corre a partir de 15 e **teletransporta** a 26 (lobo:
+  segue a 10, teleporta a 12).
 
 > Cura e modos funcionam só em Purusaurus **domesticado**. As IAs de Seguir/Ficar são
 > injetadas na entidade via um *Access Transformer* (`META-INF/accesstransformer.cfg`),
