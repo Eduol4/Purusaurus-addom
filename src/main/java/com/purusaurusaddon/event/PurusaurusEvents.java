@@ -12,18 +12,23 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingChangeTargetEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+
+import java.util.UUID;
 
 /**
  * Comportamento do Purusaurus adicionado por este addon, tudo via eventos do
  * Forge (sem mixins). O estado fica no persistentData da entidade.
  *
- *  - Bebe/domesticado nunca miram no jogador (passivos).
+ *  - Bebes (selvagens e domesticados) e adultos domesticados sao NEUTROS: so
+ *    revidam se forem atacados; o domesticado nunca revida contra o proprio dono.
+ *    Adultos selvagens continuam hostis como no mod base.
+ *  - Bebes tem metade do HP e do dano dos adultos.
  *  - Domesticacao so em bebes, com carnes/peixes, cada um com sua taxa.
- *  - Domesticado: os mesmos itens NAO re-domesticam; em vez disso curam (se ferido),
- *    reusando a animacao de mordida como "comer".
+ *  - Domesticado: os mesmos itens NAO re-domesticam; em vez disso curam (se ferido).
  *  - Shift + clique direito (qualquer item) alterna Vagar / Seguir / Ficar.
  */
 @Mod.EventBusSubscriber(modid = PurusaurusAddon.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -45,20 +50,56 @@ public class PurusaurusEvents {
         }
         mob.goalSelector.addGoal(0, new PurusaurusStayGoal(mob));
         mob.goalSelector.addGoal(1, new PurusaurusFollowOwnerGoal(mob));
+        TamingUtil.updateBabyAttributes(mob); // bebe: metade do HP/dano
     }
 
-    /** Impede que o Purusaurus mire no jogador quando for bebe ou domesticado. */
+    /** Mantem os atributos de bebe (metade de HP/dano) sincronizados conforme ele cresce. */
+    @SubscribeEvent
+    public static void onLivingTick(LivingEvent.LivingTickEvent event) {
+        LivingEntity self = event.getEntity();
+        if (self.level().isClientSide || self.tickCount % 20 != 0) {
+            return; // a cada 1s, so no servidor
+        }
+        if (TamingUtil.isPurusaurus(self) && self instanceof Mob mob) {
+            TamingUtil.updateBabyAttributes(mob);
+        }
+    }
+
+    /**
+     * Torna o Purusaurus NEUTRO quando for bebe ou domesticado: bloqueia a mira
+     * proativa no jogador, mas deixa revidar quem o atacou. O domesticado nunca
+     * revida contra o proprio dono. Adulto selvagem continua hostil (sem interferencia).
+     */
     @SubscribeEvent
     public static void onChangeTarget(LivingChangeTargetEvent event) {
         LivingEntity self = event.getEntity();
-        if (!TamingUtil.isPurusaurus(self)) {
+        if (!TamingUtil.isPurusaurus(self) || !(self instanceof Mob mob)) {
             return;
         }
-        if (!(event.getNewTarget() instanceof Player)) {
+        if (!(event.getNewTarget() instanceof Player target)) {
+            return; // so controlamos alvos que sao jogadores
+        }
+
+        boolean tamed = TamingUtil.isTamed(mob);
+        boolean baby = mob.isBaby();
+
+        // Adulto selvagem (nem bebe nem domesticado): hostil como no mod base.
+        if (!tamed && !baby) {
             return;
         }
-        boolean baby = self instanceof Mob mob && mob.isBaby();
-        if (baby || TamingUtil.isTamed(self)) {
+
+        // Domesticado nunca mira no proprio dono.
+        if (tamed) {
+            UUID owner = TamingUtil.getOwner(mob);
+            if (owner != null && owner.equals(target.getUUID())) {
+                event.setCanceled(true);
+                return;
+            }
+        }
+
+        // Neutro: so permite mirar no jogador se foi ele quem atacou (revide).
+        boolean retaliation = mob.getLastHurtByMob() == target;
+        if (!retaliation) {
             event.setCanceled(true);
         }
     }

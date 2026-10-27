@@ -48,10 +48,14 @@ filhote com `setBaby(true)` e o jogo cuida do resto (inclusive de crescer sozinh
 
 Tudo feito via eventos do Forge, **sem mixins** e sem alterar o mod base.
 
-- **Bebê é passivo ao jogador.** No mod base, o Purusaurus (inclusive bebê) mira e
-  ataca o jogador. Este addon impede que **bebês** e **domesticados** tenham o
-  jogador como alvo — então eles não perseguem nem revidam contra o jogador.
-  Adultos selvagens (não domesticados) continuam hostis como antes.
+- **Bebês e domesticados são NEUTROS.** No mod base, o Purusaurus (inclusive bebê)
+  mira e ataca o jogador. Este addon torna **bebês** (selvagens e domesticados) e
+  **adultos domesticados** neutros: não escolhem o jogador como alvo sozinhos, mas
+  **revidam** se forem atacados. O domesticado **nunca revida contra o próprio dono**
+  (revida contra outros jogadores, sim). Adultos selvagens continuam hostis como antes.
+- **Bebês têm metade dos atributos.** Bebês (selvagens e domesticados) têm metade do
+  **HP** (100 em vez de 200) e metade do **dano** (6 em vez de 12) dos adultos, via um
+  modificador de atributo aplicado enquanto são bebês e removido ao crescerem.
 - **Domesticação (só em bebês):** clique com o botão direito no bebê segurando um
   destes itens. Cada um tem sua taxa de sucesso:
 

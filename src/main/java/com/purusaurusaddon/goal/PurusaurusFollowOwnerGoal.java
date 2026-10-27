@@ -17,9 +17,10 @@ import java.util.UUID;
  * Modo "Seguir": o Purusaurus domesticado segue o dono, como o lobo, inclusive
  * teletransportando-se quando fica longe demais. Baseado no FollowOwnerGoal vanilla.
  *
- * Velocidades (multiplicadores do atributo de movimento), alinhadas ao mob base:
- *  - andar  = 0.35 (RandomStrollGoal do mob) + 5%  -> 0.3675
- *  - correr = 0.70 (MeleeAttackGoal do mob)  + 5%  -> 0.735
+ * Velocidades (multiplicadores do atributo de movimento), proximas ao mob base
+ * (andar 0.35 / correr 0.70), um pouco maiores para o pet nao ficar lento:
+ *  - andar  = 0.38
+ *  - correr = 0.75
  * Corre (e usa a animacao "run" via setAggressive) quando o dono esta correndo
  * OU muito longe; caso contrario anda normalmente.
  *
@@ -31,8 +32,8 @@ import java.util.UUID;
  */
 public class PurusaurusFollowOwnerGoal extends Goal {
 
-    private static final double WALK_SPEED = 0.35D * 1.05D; // 0.3675
-    private static final double RUN_SPEED = 0.70D * 1.05D;  // 0.735
+    private static final double WALK_SPEED = 0.38D;
+    private static final double RUN_SPEED = 0.75D;
 
     private static final float START_DISTANCE = 12.0F;
     private static final float STOP_DISTANCE = 6.0F;

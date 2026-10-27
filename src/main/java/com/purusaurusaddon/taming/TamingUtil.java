@@ -6,11 +6,15 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -73,13 +77,18 @@ public final class TamingUtil {
         return HEAL_AMOUNTS.getOrDefault(item, 0.0F);
     }
 
+    // Tipo da entidade do Purusaurus, resolvido uma vez (comparacao por referencia e barata).
+    private static EntityType<?> purusaurusType;
+
     /** True se a entidade for o Purusaurus do Unearthed Journey. */
     public static boolean isPurusaurus(Entity entity) {
         if (entity == null) {
             return false;
         }
-        ResourceLocation id = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
-        return PurusaurusAddon.PURUSAURUS_ID.equals(id);
+        if (purusaurusType == null) {
+            purusaurusType = net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getValue(PurusaurusAddon.PURUSAURUS_ID);
+        }
+        return entity.getType() == purusaurusType;
     }
 
     public static boolean isTamed(Entity entity) {
@@ -124,6 +133,41 @@ public final class TamingUtil {
         // displayClientMessage(..., true).
         if (player instanceof ServerPlayer serverPlayer) {
             serverPlayer.connection.send(new ClientboundSetActionBarTextPacket(Component.literal(message)));
+        }
+    }
+
+    // ---- Atributos do bebe (metade do HP e do dano do adulto) ----
+
+    private static final UUID BABY_HP_MODIFIER_ID = UUID.fromString("b1b0a111-0000-4000-8000-000000000001");
+    private static final UUID BABY_DMG_MODIFIER_ID = UUID.fromString("b1b0a111-0000-4000-8000-000000000002");
+
+    /**
+     * Mantem os atributos do bebe em metade dos do adulto (HP e dano), aplicando/
+     * removendo um modificador conforme a entidade e ou deixa de ser bebe.
+     * Vale para selvagens e domesticados.
+     */
+    public static void updateBabyAttributes(Mob mob) {
+        applyHalfWhileBaby(mob, Attributes.MAX_HEALTH, BABY_HP_MODIFIER_ID, "purusaurus_baby_hp");
+        applyHalfWhileBaby(mob, Attributes.ATTACK_DAMAGE, BABY_DMG_MODIFIER_ID, "purusaurus_baby_damage");
+        // Nao deixa a vida atual ultrapassar o novo maximo (ex.: bebe recem-chocado).
+        if (mob.getHealth() > mob.getMaxHealth()) {
+            mob.setHealth(mob.getMaxHealth());
+        }
+    }
+
+    private static void applyHalfWhileBaby(Mob mob, Attribute attribute, UUID id, String name) {
+        AttributeInstance instance = mob.getAttribute(attribute);
+        if (instance == null) {
+            return;
+        }
+        boolean baby = mob.isBaby();
+        boolean hasModifier = instance.getModifier(id) != null;
+        if (baby && !hasModifier) {
+            // MULTIPLY_TOTAL com -0.5 => valor final x0.5 (metade).
+            instance.addPermanentModifier(
+                    new AttributeModifier(id, name, -0.5D, AttributeModifier.Operation.MULTIPLY_TOTAL));
+        } else if (!baby && hasModifier) {
+            instance.removeModifier(id);
         }
     }
 
