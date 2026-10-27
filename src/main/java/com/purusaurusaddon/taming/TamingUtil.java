@@ -4,6 +4,7 @@ import com.purusaurusaddon.PurusaurusAddon;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -18,10 +19,10 @@ import java.util.UUID;
 /**
  * Regras e dados da domesticacao do Purusaurus.
  *
- * O "estado domesticado" e guardado no {@link Entity#getPersistentData()} da
- * propria entidade do Unearthed Journey (tag ForgeData), entao nao precisamos
- * modificar a classe compilada do mod base nem registrar capabilities: o dado
- * e salvo/carregado junto com a entidade automaticamente.
+ * O estado (domesticado, dono e modo) e guardado no
+ * {@link Entity#getPersistentData()} da propria entidade do Unearthed Journey
+ * (tag ForgeData), entao nao precisamos modificar a classe compilada do mod
+ * base: o dado e salvo/carregado junto com a entidade automaticamente.
  */
 public final class TamingUtil {
 
@@ -29,6 +30,12 @@ public final class TamingUtil {
 
     public static final String TAMED_KEY = "purusaurusaddon:Tamed";
     public static final String OWNER_KEY = "purusaurusaddon:Owner";
+    public static final String MODE_KEY = "purusaurusaddon:Mode";
+
+    // Modos de comportamento do Purusaurus domesticado.
+    public static final int MODE_WANDER = 0; // vaga como os selvagens
+    public static final int MODE_FOLLOW = 1; // segue o dono (com teleporte)
+    public static final int MODE_STAY = 2;   // fica parado
 
     /** Item de domesticacao -> taxa de sucesso (0..1). */
     public static final Map<Item, Float> TAMING_ITEMS = Map.ofEntries(
@@ -42,9 +49,26 @@ public final class TamingUtil {
             Map.entry(Items.TROPICAL_FISH, 0.015F)  // peixe tropical
     );
 
+    /** Item -> pontos de cura (ao alimentar um Purusaurus domesticado ferido). */
+    public static final Map<Item, Float> HEAL_AMOUNTS = Map.ofEntries(
+            Map.entry(Items.BEEF, 25.0F),
+            Map.entry(Items.PORKCHOP, 24.0F),
+            Map.entry(Items.MUTTON, 23.0F),
+            Map.entry(Items.RABBIT, 18.0F),
+            Map.entry(Items.CHICKEN, 17.0F),
+            Map.entry(Items.SALMON, 8.0F),
+            Map.entry(Items.COD, 7.0F),
+            Map.entry(Items.TROPICAL_FISH, 6.0F)
+    );
+
     /** Chance de domesticar com este item, ou 0 se o item nao serve. */
     public static float tamingChance(Item item) {
         return TAMING_ITEMS.getOrDefault(item, 0.0F);
+    }
+
+    /** Pontos de cura deste item, ou 0 se o item nao cura. */
+    public static float healAmount(Item item) {
+        return HEAL_AMOUNTS.getOrDefault(item, 0.0F);
     }
 
     /** True se a entidade for o Purusaurus do Unearthed Journey. */
@@ -71,6 +95,29 @@ public final class TamingUtil {
     public static UUID getOwner(Entity entity) {
         CompoundTag data = entity.getPersistentData();
         return data.hasUUID(OWNER_KEY) ? data.getUUID(OWNER_KEY) : null;
+    }
+
+    public static int getMode(Entity entity) {
+        return entity.getPersistentData().getInt(MODE_KEY);
+    }
+
+    public static void setMode(Entity entity, int mode) {
+        entity.getPersistentData().putInt(MODE_KEY, mode);
+    }
+
+    /** Alterna Vagar -> Seguir -> Ficar -> Vagar e avisa o jogador. */
+    public static void cycleMode(Mob mob, Player player) {
+        int mode = (getMode(mob) + 1) % 3;
+        setMode(mob, mode);
+        if (mode == MODE_STAY) {
+            mob.getNavigation().stop();
+        }
+        String label = switch (mode) {
+            case MODE_FOLLOW -> "Seguir";
+            case MODE_STAY -> "Ficar";
+            default -> "Vagar";
+        };
+        player.displayClientMessage(Component.literal("Purussauro: " + label), true);
     }
 
     /**

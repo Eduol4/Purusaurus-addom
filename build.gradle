@@ -17,6 +17,9 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 minecraft {
     mappings channel: mapping_channel, version: mapping_version
 
+    // Necessario para tornar Mob.goalSelector acessivel (adicionar goals em runtime).
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+
     copyIdeResources = true
 
     runs {

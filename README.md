@@ -75,6 +75,33 @@ Tudo feito via eventos do Forge, **sem mixins** e sem alterar o mod base.
 > Adultos **não** são domesticáveis — só bebês. Para ter um Purusaurus domesticado,
 > consiga um ovo, espere chocar e domestique o filhote.
 
+### Cuidar do Purusaurus domesticado (fase 3)
+
+- **Itens de domesticação não re-domesticam** um Purusaurus já domado.
+- **Curar:** com o pet ferido, clique com o botão direito usando um dos itens de
+  domesticação. Cada um cura uma quantia (e consome 1 item, exceto no criativo), e
+  ele reaproveita a animação de **mordida** como animação de comer:
+
+  | Item | Cura (pontos) |
+  |------|---------------|
+  | Carne de vaca | 25 |
+  | Carne de porco | 24 |
+  | Carne de ovelha | 23 |
+  | Carne de coelho | 18 |
+  | Carne de frango | 17 |
+  | Salmão | 8 |
+  | Bacalhau | 7 |
+  | Peixe tropical | 6 |
+
+- **Modos (Shift + clique direito, com qualquer item):** alterna entre
+  **Vagar** (anda sozinho como os selvagens), **Seguir** (segue o dono como o lobo,
+  com teleporte se ficar longe demais) e **Ficar** (fica parado). Uma mensagem na
+  barra de ação mostra o modo atual.
+
+> Cura e modos funcionam só em Purusaurus **domesticado**. As IAs de Seguir/Ficar são
+> injetadas na entidade via um *Access Transformer* (`META-INF/accesstransformer.cfg`),
+> que torna o `goalSelector` acessível — por isso o `build.gradle` referencia esse arquivo.
+
 ---
 
 ## Como gerar o `.jar` pelo GitHub Actions (recomendado)
