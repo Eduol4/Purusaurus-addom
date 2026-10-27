@@ -86,26 +86,33 @@ public final class PurusaurusSwimController {
         mob.yBodyRot = newYaw;
     }
 
-    /** Para onde nadar: alvo, caminho, destino do move control (vagar), ou o dono. */
+    /**
+     * Para onde nadar, em ordem de prioridade. Importante: perseguir/seguir usam a
+     * posicao 3D real (com profundidade). O caminho da navegacao fica por ultimo,
+     * pois a navegacao de chao so cria nos na superficie (nao serve para mergulhar).
+     */
     private static Vec3 swimGoal(Mob mob) {
+        // 1) Perseguir alvo (3D).
         LivingEntity target = mob.getTarget();
         if (target != null && target.isAlive()) {
             return target.position();
         }
-        Path path = mob.getNavigation().getPath();
-        if (path != null && !path.isDone()) {
-            return path.getNextEntityPos(mob);
-        }
-        if (mob.getMoveControl().hasWanted()) {
-            return new Vec3(mob.getMoveControl().getWantedX(),
-                    mob.getMoveControl().getWantedY(),
-                    mob.getMoveControl().getWantedZ());
-        }
+        // 2) Seguir o dono (3D, com profundidade).
         if (TamingUtil.isTamed(mob) && TamingUtil.getMode(mob) == TamingUtil.MODE_FOLLOW) {
             Player owner = TamingUtil.getOwnerPlayer(mob);
             if (owner != null && mob.distanceToSqr(owner) > 9.0D) {
                 return owner.position();
             }
+        }
+        // 3) Vagar nadando (destino gravado na entidade pelo PurusaurusSwimWanderGoal).
+        Vec3 wander = TamingUtil.getSwimWander(mob);
+        if (wander != null) {
+            return wander;
+        }
+        // 4) Fallback: caminho atual da navegacao (nos de superficie).
+        Path path = mob.getNavigation().getPath();
+        if (path != null && !path.isDone()) {
+            return path.getNextEntityPos(mob);
         }
         return null;
     }

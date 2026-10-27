@@ -23,6 +23,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Map;
 import java.util.UUID;
@@ -143,6 +144,34 @@ public final class TamingUtil {
 
     public static int getMode(Entity entity) {
         return entity.getPersistentData().getInt(MODE_KEY);
+    }
+
+    // ---- Destino do "vagar nadando" (lido pelo PurusaurusSwimController) ----
+
+    private static final String WANDER_X = "purusaurusaddon:WanderX";
+    private static final String WANDER_Y = "purusaurusaddon:WanderY";
+    private static final String WANDER_Z = "purusaurusaddon:WanderZ";
+
+    public static void setSwimWander(Mob mob, double x, double y, double z) {
+        CompoundTag data = mob.getPersistentData();
+        data.putDouble(WANDER_X, x);
+        data.putDouble(WANDER_Y, y);
+        data.putDouble(WANDER_Z, z);
+    }
+
+    public static void clearSwimWander(Mob mob) {
+        CompoundTag data = mob.getPersistentData();
+        data.remove(WANDER_X);
+        data.remove(WANDER_Y);
+        data.remove(WANDER_Z);
+    }
+
+    public static Vec3 getSwimWander(Mob mob) {
+        CompoundTag data = mob.getPersistentData();
+        if (!data.contains(WANDER_X)) {
+            return null;
+        }
+        return new Vec3(data.getDouble(WANDER_X), data.getDouble(WANDER_Y), data.getDouble(WANDER_Z));
     }
 
     public static void setMode(Entity entity, int mode) {

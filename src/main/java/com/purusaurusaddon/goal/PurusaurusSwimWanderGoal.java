@@ -1,6 +1,5 @@
 package com.purusaurusaddon.goal;
 
-import com.purusaurusaddon.swim.PurusaurusSwimController;
 import com.purusaurusaddon.taming.TamingUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Mob;
@@ -64,17 +63,13 @@ public class PurusaurusSwimWanderGoal extends Goal {
 
     @Override
     public void start() {
-        mob.getMoveControl().setWantedPosition(tx, ty, tz, PurusaurusSwimController.SWIM_SLOW_MODIFIER);
+        TamingUtil.setSwimWander(mob, tx, ty, tz); // o controlador de nado le isto
     }
 
     @Override
     public void stop() {
         this.hasTarget = false;
-    }
-
-    @Override
-    public void tick() {
-        mob.getMoveControl().setWantedPosition(tx, ty, tz, PurusaurusSwimController.SWIM_SLOW_MODIFIER);
+        TamingUtil.clearSwimWander(mob);
     }
 
     /** Ponto de agua proximo, raso (tende a nao ir fundo). */
