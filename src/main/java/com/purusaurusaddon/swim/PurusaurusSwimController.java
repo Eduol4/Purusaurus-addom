@@ -20,28 +20,32 @@ public final class PurusaurusSwimController {
 
     private PurusaurusSwimController() {}
 
-    public static final double SWIM_SLOW_MODIFIER = 0.50D; // nado lento (~andar)
-    public static final double SWIM_FAST_MODIFIER = 1.00D;  // nado rapido (~correr)
+    public static final double SWIM_SLOW_MODIFIER = 0.52D; // nado lento (~andar)
+    public static final double SWIM_FAST_MODIFIER = 1.20D;  // nado rapido (~correr)
     private static final double SWIM_SCALE = 0.22D;         // modificador -> blocos/tick
     private static final float TURN_SPEED = 15.0F;          // graus/tick para virar o corpo
+    private static final String IDLE_Y = "purusaurusaddon:IdleY"; // profundidade ao pairar ocioso
 
     /** Chamado todo tick no servidor para cada Purusaurus. Age somente na agua. */
     public static void tick(Mob mob) {
         if (!mob.isInWater()) {
+            mob.getPersistentData().remove(IDLE_Y);
             return;
         }
 
         // Faz o controlador de animacao do mob base tocar "swim" enquanto na agua.
         mob.setAggressive(true);
 
-        // Modo "ficar" na agua: segura a profundidade atual em vez de boiar.
+        // Modo "ficar" na agua: segura a profundidade onde foi mandado ficar.
         if (TamingUtil.isTamed(mob) && TamingUtil.getMode(mob) == TamingUtil.MODE_STAY) {
-            holdDepth(mob);
+            mob.getPersistentData().remove(IDLE_Y);
+            holdAtDepth(mob, stayDepth(mob), 0.08D);
             return;
         }
 
         Vec3 goal = swimGoal(mob);
         if (goal != null) {
+            mob.getPersistentData().remove(IDLE_Y); // esta se movendo: esquece o "pairar"
             Vec3 toGoal = goal.subtract(mob.position());
             double dist = toGoal.length();
             if (dist > 0.4D) {
@@ -53,25 +57,37 @@ public final class PurusaurusSwimController {
                 faceMovement(mob, dir); // vira o corpo para a direcao (corrige nadar de re)
             }
         } else {
-            // Ocioso na agua: sobe suavemente para ficar perto da superficie.
-            Vec3 dm = mob.getDeltaMovement();
-            if (dm.y < 0.02D) {
-                mob.setDeltaMovement(dm.x * 0.8D, dm.y + 0.02D, dm.z * 0.8D);
-            }
+            // Ocioso na agua (ex.: pausa entre pontos do vagar): PAIRA na profundidade
+            // atual, em vez de subir para a superficie.
+            holdAtDepth(mob, idleDepth(mob), 0.06D);
         }
     }
 
-    /** Segura a profundidade onde foi mandado ficar (nao sobe nem desce). */
-    private static void holdDepth(Mob mob) {
-        double targetY;
+    /** Profundidade travada no modo ficar (captura a atual na 1a vez). */
+    private static double stayDepth(Mob mob) {
         if (mob.getPersistentData().contains(TamingUtil.STAY_Y_KEY)) {
-            targetY = mob.getPersistentData().getDouble(TamingUtil.STAY_Y_KEY);
-        } else {
-            targetY = mob.getY();
-            mob.getPersistentData().putDouble(TamingUtil.STAY_Y_KEY, targetY);
+            return mob.getPersistentData().getDouble(TamingUtil.STAY_Y_KEY);
         }
-        double dy = Mth.clamp(targetY - mob.getY(), -0.08D, 0.08D);
-        mob.setDeltaMovement(0.0D, dy, 0.0D);
+        double y = mob.getY();
+        mob.getPersistentData().putDouble(TamingUtil.STAY_Y_KEY, y);
+        return y;
+    }
+
+    /** Profundidade onde comecou a pairar (captura a atual na 1a vez). */
+    private static double idleDepth(Mob mob) {
+        if (mob.getPersistentData().contains(IDLE_Y)) {
+            return mob.getPersistentData().getDouble(IDLE_Y);
+        }
+        double y = mob.getY();
+        mob.getPersistentData().putDouble(IDLE_Y, y);
+        return y;
+    }
+
+    /** Mantem o mob na profundidade alvo, sem movimento horizontal. */
+    private static void holdAtDepth(Mob mob, double targetY, double maxStep) {
+        double dy = Mth.clamp(targetY - mob.getY(), -maxStep, maxStep);
+        Vec3 dm = mob.getDeltaMovement();
+        mob.setDeltaMovement(dm.x * 0.6D, dy, dm.z * 0.6D);
     }
 
     /** Gira o corpo gradualmente para a direcao horizontal do nado. */
