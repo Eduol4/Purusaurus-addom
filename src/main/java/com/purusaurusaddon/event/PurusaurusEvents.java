@@ -30,7 +30,7 @@ public class PurusaurusEvents {
         if (!TamingUtil.isPurusaurus(self)) {
             return;
         }
-        if (!(event.getNewAboutToBeSetTarget() instanceof Player)) {
+        if (!(event.getNewTarget() instanceof Player)) {
             return;
         }
         boolean baby = self instanceof Mob mob && mob.isBaby();
