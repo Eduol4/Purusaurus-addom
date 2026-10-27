@@ -94,9 +94,12 @@ Tudo feito via eventos do Forge, **sem mixins** e sem alterar o mod base.
   | Peixe tropical | 6 |
 
 - **Modos (Shift + clique direito, com qualquer item):** alterna entre
-  **Vagar** (anda sozinho como os selvagens), **Seguir** (segue o dono como o lobo,
-  com teleporte se ficar longe demais) e **Ficar** (fica parado). Uma mensagem na
-  barra de ação mostra o modo atual.
+  **Vagar** (anda sozinho como os selvagens), **Seguir** e **Ficar** (fica parado).
+  Uma mensagem na barra de ação (acima da hotbar) mostra o modo atual.
+- **Seguir:** segue o dono como o lobo. Anda na velocidade normal do bicho (0.35 + 5%)
+  e **corre** (animação de corrida, 0.70 + 5%) quando o dono está correndo ou muito
+  longe. Distâncias maiores que as do lobo: começa a seguir a 12 blocos, corre a partir
+  de 18 e **teletransporta** a 26 (lobo: segue a 10, teleporta a 12).
 
 > Cura e modos funcionam só em Purusaurus **domesticado**. As IAs de Seguir/Ficar são
 > injetadas na entidade via um *Access Transformer* (`META-INF/accesstransformer.cfg`),

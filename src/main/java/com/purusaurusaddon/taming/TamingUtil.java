@@ -5,8 +5,10 @@ import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
@@ -105,19 +107,24 @@ public final class TamingUtil {
         entity.getPersistentData().putInt(MODE_KEY, mode);
     }
 
-    /** Alterna Vagar -> Seguir -> Ficar -> Vagar e avisa o jogador. */
+    /** Alterna Vagar -> Seguir -> Ficar -> Vagar e avisa o jogador na action bar. */
     public static void cycleMode(Mob mob, Player player) {
         int mode = (getMode(mob) + 1) % 3;
         setMode(mob, mode);
         if (mode == MODE_STAY) {
             mob.getNavigation().stop();
         }
-        String label = switch (mode) {
-            case MODE_FOLLOW -> "Seguir";
-            case MODE_STAY -> "Ficar";
-            default -> "Vagar";
+        String message = switch (mode) {
+            case MODE_FOLLOW -> "Purusaurus is following.";
+            case MODE_STAY -> "Purusaurus is staying.";
+            default -> "Purusaurus is wandering.";
         };
-        player.displayClientMessage(Component.literal("Purussauro: " + label), true);
+        // Enviado como texto da action bar (acima da hotbar, centralizado). Esse pacote
+        // nao e suprimido pelas configuracoes de visibilidade de chat, ao contrario de
+        // displayClientMessage(..., true).
+        if (player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.connection.send(new ClientboundSetActionBarTextPacket(Component.literal(message)));
+        }
     }
 
     /**

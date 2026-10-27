@@ -44,7 +44,7 @@ public class PurusaurusEvents {
             return;
         }
         mob.goalSelector.addGoal(0, new PurusaurusStayGoal(mob));
-        mob.goalSelector.addGoal(1, new PurusaurusFollowOwnerGoal(mob, 1.0D, 10.0F, 5.0F, 16.0F));
+        mob.goalSelector.addGoal(1, new PurusaurusFollowOwnerGoal(mob));
     }
 
     /** Impede que o Purusaurus mire no jogador quando for bebe ou domesticado. */

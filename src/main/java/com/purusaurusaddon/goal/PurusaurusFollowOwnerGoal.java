@@ -14,29 +14,39 @@ import java.util.EnumSet;
 import java.util.UUID;
 
 /**
- * Modo "Seguir": o Purusaurus domesticado segue o dono, como o lobo,
- * inclusive teletransportando-se para perto quando fica longe demais.
- * Baseado no FollowOwnerGoal vanilla.
+ * Modo "Seguir": o Purusaurus domesticado segue o dono, como o lobo, inclusive
+ * teletransportando-se quando fica longe demais. Baseado no FollowOwnerGoal vanilla.
+ *
+ * Velocidades (multiplicadores do atributo de movimento), alinhadas ao mob base:
+ *  - andar  = 0.35 (RandomStrollGoal do mob) + 5%  -> 0.3675
+ *  - correr = 0.70 (MeleeAttackGoal do mob)  + 5%  -> 0.735
+ * Corre (e usa a animacao "run" via setAggressive) quando o dono esta correndo
+ * OU muito longe; caso contrario anda normalmente.
+ *
+ * Distancias (maiores que as do lobo, por causa do tamanho do bicho):
+ *  - comeca a seguir a 12 blocos (lobo: 10)
+ *  - para de seguir a 6 blocos
+ *  - passa a correr a partir de 18 blocos
+ *  - teletransporta a 26 blocos (lobo: 12)
  */
 public class PurusaurusFollowOwnerGoal extends Goal {
 
+    private static final double WALK_SPEED = 0.35D * 1.05D; // 0.3675
+    private static final double RUN_SPEED = 0.70D * 1.05D;  // 0.735
+
+    private static final float START_DISTANCE = 12.0F;
+    private static final float STOP_DISTANCE = 6.0F;
+    private static final float RUN_DISTANCE = 18.0F;
+    private static final float TELEPORT_DISTANCE = 26.0F;
+
     private final Mob mob;
-    private final double speedModifier;
-    private final float startDistance;
-    private final float stopDistance;
-    private final float teleportDistance;
     private final PathNavigation navigation;
 
     private Player owner;
     private int timeToRecalcPath;
 
-    public PurusaurusFollowOwnerGoal(Mob mob, double speedModifier,
-                                     float startDistance, float stopDistance, float teleportDistance) {
+    public PurusaurusFollowOwnerGoal(Mob mob) {
         this.mob = mob;
-        this.speedModifier = speedModifier;
-        this.startDistance = startDistance;
-        this.stopDistance = stopDistance;
-        this.teleportDistance = teleportDistance;
         this.navigation = mob.getNavigation();
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
@@ -62,7 +72,7 @@ public class PurusaurusFollowOwnerGoal extends Goal {
         if (p == null || p.isSpectator() || p.isDeadOrDying()) {
             return false;
         }
-        if (mob.distanceToSqr(p) < (double) (startDistance * startDistance)) {
+        if (mob.distanceToSqr(p) < (double) (START_DISTANCE * START_DISTANCE)) {
             return false;
         }
         this.owner = p;
@@ -75,7 +85,7 @@ public class PurusaurusFollowOwnerGoal extends Goal {
             return false;
         }
         return !navigation.isDone()
-                && mob.distanceToSqr(owner) > (double) (stopDistance * stopDistance);
+                && mob.distanceToSqr(owner) > (double) (STOP_DISTANCE * STOP_DISTANCE);
     }
 
     @Override
@@ -87,17 +97,26 @@ public class PurusaurusFollowOwnerGoal extends Goal {
     public void stop() {
         this.owner = null;
         this.navigation.stop();
+        this.mob.setAggressive(false); // volta para a animacao de andar/parado
     }
 
     @Override
     public void tick() {
         mob.getLookControl().setLookAt(owner, 10.0F, (float) mob.getMaxHeadXRot());
+
+        // Correr se o dono estiver correndo ou muito longe; senao, andar.
+        boolean shouldRun = owner.isSprinting()
+                || mob.distanceToSqr(owner) > (double) (RUN_DISTANCE * RUN_DISTANCE);
+        double speed = shouldRun ? RUN_SPEED : WALK_SPEED;
+        mob.setAggressive(shouldRun);            // alterna animacao run/walk
+        navigation.setSpeedModifier(speed);      // ajuste de velocidade responsivo
+
         if (--this.timeToRecalcPath <= 0) {
             this.timeToRecalcPath = this.adjustedTickDelay(10);
-            if (mob.distanceToSqr(owner) >= (double) (teleportDistance * teleportDistance)) {
+            if (mob.distanceToSqr(owner) >= (double) (TELEPORT_DISTANCE * TELEPORT_DISTANCE)) {
                 teleportToOwner();
             } else {
-                navigation.moveTo(owner, speedModifier);
+                navigation.moveTo(owner, speed);
             }
         }
     }
