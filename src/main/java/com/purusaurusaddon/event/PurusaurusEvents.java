@@ -6,6 +6,7 @@ import com.purusaurusaddon.goal.PurusaurusOwnerHurtTargetGoal;
 import com.purusaurusaddon.goal.PurusaurusStayGoal;
 import com.purusaurusaddon.registry.ModBlocks;
 import com.purusaurusaddon.registry.ModItems;
+import com.purusaurusaddon.swim.PurusaurusSwimController;
 import com.purusaurusaddon.taming.TamingUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
@@ -15,11 +16,14 @@ import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.BabyEntitySpawnEvent;
 import net.minecraftforge.event.entity.living.LivingChangeTargetEvent;
@@ -66,22 +70,48 @@ public class PurusaurusEvents {
         // Domesticado ataca o que o dono ataca (menos outros pets).
         mob.targetSelector.addGoal(1, new PurusaurusOwnerHurtTargetGoal(mob));
         TamingUtil.updateBabyAttributes(mob); // bebe: metade do HP/dano
+
+        // --- Preparo para a natacao ---
+        // Deixa a navegacao entrar na agua (sem custo) e remove o "boiar" padrao,
+        // para que o PurusaurusSwimController possa faze-lo mergulhar/emergir.
+        mob.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
+        mob.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 0.0F);
+        if (mob.getNavigation() instanceof GroundPathNavigation groundNav) {
+            groundNav.setCanFloat(true);
+        }
+        mob.goalSelector.getAvailableGoals().removeIf(w -> w.getGoal() instanceof FloatGoal);
     }
 
-    /** Atributos de bebe + regeneracao natural do domesticado (a cada 1s, no servidor). */
+    /** Nado (todo tick) + atributos de bebe, oxigenio e regeneracao (a cada 1s). */
     @SubscribeEvent
     public static void onLivingTick(LivingEvent.LivingTickEvent event) {
         LivingEntity self = event.getEntity();
-        if (self.level().isClientSide || self.tickCount % 20 != 0) {
+        if (self.level().isClientSide) {
             return;
         }
         if (!TamingUtil.isPurusaurus(self) || !(self instanceof Mob mob)) {
             return;
         }
+
+        // Todo tick: controle de nado na agua.
+        PurusaurusSwimController.tick(mob);
+        // Em terra, garante que a flag de animacao (usada para correr/nadar) nao
+        // fique presa quando ninguem a estiver gerenciando (ex.: ao sair da agua).
+        if (!mob.isInWater()) {
+            boolean followRunning = mob.goalSelector.getRunningGoals()
+                    .anyMatch(w -> w.getGoal() instanceof PurusaurusFollowOwnerGoal);
+            if (!followRunning && mob.isAggressive()) {
+                mob.setAggressive(false);
+            }
+        }
+
+        // A cada 1s (no servidor):
+        if (self.tickCount % 20 != 0) {
+            return;
+        }
         TamingUtil.updateBabyAttributes(mob); // bebe: metade do HP/dano
 
-        // Sem oxigenio/afogamento: mantem o ar cheio (o dano de afogamento tambem
-        // e cancelado em onLivingHurt).
+        // Sem oxigenio/afogamento: mantem o ar cheio (o dano tambem e cancelado).
         if (mob.getAirSupply() < mob.getMaxAirSupply()) {
             mob.setAirSupply(mob.getMaxAirSupply());
         }

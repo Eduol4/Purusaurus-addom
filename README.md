@@ -73,8 +73,21 @@ Tudo feito via eventos do Forge, **sem mixins** e sem alterar o mod base.
 - **Dano variável (adultos).** Cada ataque de um Purusaurus adulto (selvagem ou
   domesticado) tem 10% de chance de causar **15** de dano e 5% de causar **18**, em vez
   dos 12 normais. Não vale para bebês.
-- **Não se afoga.** O Purusaurus não sofre dano de afogamento (o oxigênio fica sempre
-  cheio) — primeiro passo da natação.
+### Natação
+
+Vale para selvagens e domesticados.
+
+- **Não se afoga** (oxigênio sempre cheio, dano de afogamento cancelado).
+- **Nada em 3D de verdade:** enquanto está na água, um controlador assume o movimento e
+  o faz **mergulhar e emergir** indo atrás do seu destino, em vez de só boiar. Isso é
+  feito "pilotando" o mob na água — o mod base não é alterado.
+- **Dois modos:** nado **lento** (modificador 0.50) e **rápido** (1.00). Ele nada rápido
+  ao perseguir um alvo ou seguir um dono que esteja correndo/longe; senão, nada devagar.
+  (As velocidades são constantes em `PurusaurusSwimController` e fáceis de ajustar.)
+- **Entra na água** para perseguir alvos (que o atacaram/provocaram, ou que o dono atacou)
+  e para seguir o dono nadando. Vagar autônomo dentro d'água acontece de forma leve
+  quando a navegação entra na água; o foco é perseguir/seguir.
+- **Animação:** usa automaticamente a animação de nadar já existente enquanto está na água.
 - **Domesticação (só em bebês):** clique com o botão direito no bebê segurando um
   destes itens. Cada um tem sua taxa de sucesso:
 

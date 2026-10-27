@@ -109,7 +109,9 @@ public class PurusaurusFollowOwnerGoal extends Goal {
         boolean shouldRun = owner.isSprinting()
                 || mob.distanceToSqr(owner) > (double) (RUN_DISTANCE * RUN_DISTANCE);
         double speed = shouldRun ? RUN_SPEED : WALK_SPEED;
-        mob.setAggressive(shouldRun);            // alterna animacao run/walk
+        if (!mob.isInWater()) {
+            mob.setAggressive(shouldRun);        // anim run/walk em terra; na agua quem manda e o nado
+        }
         navigation.setSpeedModifier(speed);      // ajuste de velocidade responsivo
 
         if (--this.timeToRecalcPath <= 0) {
