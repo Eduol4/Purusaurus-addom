@@ -70,6 +70,11 @@ Tudo feito via eventos do Forge, **sem mixins** e sem alterar o mod base.
 - **Bebês têm metade dos atributos.** Bebês (selvagens e domesticados) têm metade do
   **HP** (100 em vez de 200) e metade do **dano** (6 em vez de 12) dos adultos, via um
   modificador de atributo aplicado enquanto são bebês e removido ao crescerem.
+- **Dano variável (adultos).** Cada ataque de um Purusaurus adulto (selvagem ou
+  domesticado) tem 10% de chance de causar **15** de dano e 5% de causar **18**, em vez
+  dos 12 normais. Não vale para bebês.
+- **Não se afoga.** O Purusaurus não sofre dano de afogamento (o oxigênio fica sempre
+  cheio) — primeiro passo da natação.
 - **Domesticação (só em bebês):** clique com o botão direito no bebê segurando um
   destes itens. Cada um tem sua taxa de sucesso:
 
@@ -83,6 +88,7 @@ Tudo feito via eventos do Forge, **sem mixins** e sem alterar o mod base.
   | Salmão (cru) | 5% |
   | Bacalhau (cru) | 2,5% |
   | Peixe tropical | 1,5% |
+  | Carne podre | 1% (só domestica, **não** cura) |
 
   O item é consumido a cada tentativa (exceto no criativo). **Sucesso** → partículas
   de **coração**; **falha** → partículas de **fumaça** (igual ao lobo).

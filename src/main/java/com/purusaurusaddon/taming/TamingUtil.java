@@ -57,7 +57,8 @@ public final class TamingUtil {
             Map.entry(Items.CHICKEN, 0.10F),        // carne de frango
             Map.entry(Items.SALMON, 0.05F),         // salmao
             Map.entry(Items.COD, 0.025F),           // bacalhau
-            Map.entry(Items.TROPICAL_FISH, 0.015F)  // peixe tropical
+            Map.entry(Items.TROPICAL_FISH, 0.015F), // peixe tropical
+            Map.entry(Items.ROTTEN_FLESH, 0.01F)    // carne podre (so domestica, nao cura)
     );
 
     /** Item -> pontos de cura (ao alimentar um Purusaurus domesticado ferido). */

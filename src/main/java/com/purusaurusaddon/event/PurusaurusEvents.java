@@ -11,6 +11,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -23,6 +25,7 @@ import net.minecraftforge.event.entity.living.BabyEntitySpawnEvent;
 import net.minecraftforge.event.entity.living.LivingChangeTargetEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
+import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -77,10 +80,38 @@ public class PurusaurusEvents {
         }
         TamingUtil.updateBabyAttributes(mob); // bebe: metade do HP/dano
 
+        // Sem oxigenio/afogamento: mantem o ar cheio (o dano de afogamento tambem
+        // e cancelado em onLivingHurt).
+        if (mob.getAirSupply() < mob.getMaxAirSupply()) {
+            mob.setAirSupply(mob.getMaxAirSupply());
+        }
+
         // Regeneracao natural: domesticado recupera 1 HP a cada 5 segundos.
         if (self.tickCount % 100 == 0 && TamingUtil.isTamed(mob)
                 && mob.getHealth() < mob.getMaxHealth()) {
             mob.heal(1.0F);
+        }
+    }
+
+    /** Sem afogamento + variacao de dano do ataque. */
+    @SubscribeEvent
+    public static void onLivingHurt(LivingHurtEvent event) {
+        // (a) Purusaurus nao se afoga.
+        LivingEntity victim = event.getEntity();
+        if (TamingUtil.isPurusaurus(victim) && event.getSource().is(DamageTypes.DROWN)) {
+            event.setCanceled(true);
+            return;
+        }
+
+        // (b) Ataque do Purusaurus adulto: 10% causa 15 de dano, 5% causa 18 (senao 12).
+        Entity attacker = event.getSource().getEntity();
+        if (TamingUtil.isPurusaurus(attacker) && attacker instanceof Mob mob && !mob.isBaby()) {
+            float r = mob.getRandom().nextFloat();
+            if (r < 0.05F) {
+                event.setAmount(18.0F);
+            } else if (r < 0.15F) {
+                event.setAmount(15.0F);
+            }
         }
     }
 
@@ -154,10 +185,11 @@ public class PurusaurusEvents {
 
         ItemStack stack = event.getItemStack();
         boolean isTamingItem = TamingUtil.tamingChance(stack.getItem()) > 0.0F;
+        boolean isHealItem = TamingUtil.healAmount(stack.getItem()) > 0.0F;
 
         if (TamingUtil.isTamed(mob)) {
-            // 2) Domesticado: itens de domesticacao curam (nunca re-domesticam).
-            if (!isTamingItem) {
+            // 2) Domesticado: so as carnes que curam tem efeito (carne podre nao cura).
+            if (!isHealItem) {
                 return;
             }
             event.setCanceled(true);

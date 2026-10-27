@@ -19,8 +19,8 @@ import java.util.UUID;
  *
  * Velocidades (multiplicadores do atributo de movimento), proximas ao mob base
  * (andar 0.35 / correr 0.70), um pouco maiores para o pet nao ficar lento:
- *  - andar  = 0.39
- *  - correr = 0.77
+ *  - andar  = 0.40
+ *  - correr = 0.78
  * Corre (e usa a animacao "run" via setAggressive) quando o dono esta correndo
  * OU muito longe; caso contrario anda normalmente.
  *
@@ -32,8 +32,8 @@ import java.util.UUID;
  */
 public class PurusaurusFollowOwnerGoal extends Goal {
 
-    private static final double WALK_SPEED = 0.39D;
-    private static final double RUN_SPEED = 0.77D;
+    private static final double WALK_SPEED = 0.40D;
+    private static final double RUN_SPEED = 0.78D;
 
     private static final float START_DISTANCE = 12.0F;
     private static final float STOP_DISTANCE = 6.0F;
